@@ -1,10 +1,10 @@
 # LedgerPulse
 
+**Live deployment:** [Open LedgerPulse](https://web-production-ff552.up.railway.app) | [API health](https://api-production-271c.up.railway.app/api/health)
+
 LedgerPulse is an explainable financial-behaviour and anomaly-aware mini-ledger. It records income and expenses, but its main question is different from a typical expense tracker: **what changed in this user's behaviour, and what evidence supports that conclusion?**
 
 This is a production-minded hiring assignment, not a claim of production readiness. It is deliberately honest about small samples, cache failure, single-user scope, and notification-delivery limitations.
-
-**Live deployment:** [Open LedgerPulse](https://web-production-ff552.up.railway.app) · [API health](https://api-production-271c.up.railway.app/api/health)
 
 The Railway deployment runs the Next.js web app, NestJS API, PostgreSQL, and Redis as separate services and includes deterministic demo data so the Behaviour Fingerprint can be reviewed immediately.
 
