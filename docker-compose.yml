@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ledgerpulse
+      POSTGRES_USER: ledgerpulse
+      POSTGRES_PASSWORD: ledgerpulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - ledgerpulse-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledgerpulse -d ledgerpulse"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ledgerpulse-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://ledgerpulse:ledgerpulse@postgres:5432/ledgerpulse?schema=public
+      REDIS_URL: redis://redis:6379
+      PORT: 4000
+      WEB_ORIGIN: http://localhost:3000
+      DEMO_USER_ID: 00000000-0000-4000-8000-000000000001
+      SEED_DEMO_DATA: "true"
+      LOG_LEVEL: info
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  ledgerpulse-postgres:
+  ledgerpulse-redis:

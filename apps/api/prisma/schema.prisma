@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum AnomalyConfidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum IdempotencyStatus {
+  PENDING
+  COMPLETED
+}
+
+model User {
+  id                 String              @id @default(uuid()) @db.Uuid
+  email              String              @unique
+  displayName        String
+  timezone           String              @default("Asia/Kolkata")
+  categories         Category[]
+  transactions       Transaction[]
+  notifications      Notification[]
+  idempotencyRecords IdempotencyRecord[]
+  createdAt          DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime            @updatedAt @db.Timestamptz(3)
+}
+
+model Category {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @db.Uuid
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  type         TransactionType
+  color        String
+  isActive     Boolean         @default(true)
+  transactions Transaction[]
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@unique([userId, slug])
+  @@index([userId, type, isActive])
+}
+
+model Transaction {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @db.Uuid
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId        String            @db.Uuid
+  category          Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  type              TransactionType
+  amount            Decimal           @db.Decimal(14, 2)
+  currency          String            @db.Char(3)
+  description       String?           @db.VarChar(240)
+  transactionDate   DateTime          @db.Timestamptz(3)
+  anomalyScore      Int?
+  anomalyConfidence AnomalyConfidence?
+  anomalyVersion    String?
+  anomalyAnalysis   Json?
+  notifications     Notification[]
+  idempotencyRecord IdempotencyRecord?
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@index([userId, transactionDate(sort: Desc)])
+  @@index([userId, type, transactionDate(sort: Desc)])
+  @@index([userId, categoryId, transactionDate(sort: Desc)])
+}
+
+model IdempotencyRecord {
+  id            String            @id @default(uuid()) @db.Uuid
+  userId        String            @db.Uuid
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key           String            @db.Uuid
+  operation     String            @db.VarChar(80)
+  requestHash   String            @db.Char(64)
+  status        IdempotencyStatus @default(PENDING)
+  transactionId String?           @unique @db.Uuid
+  transaction   Transaction?      @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  expiresAt     DateTime          @db.Timestamptz(3)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@unique([userId, key, operation])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id            String               @id @default(uuid()) @db.Uuid
+  userId        String               @db.Uuid
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionId String?              @db.Uuid
+  transaction   Transaction?         @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  eventType     String               @db.VarChar(80)
+  severity      NotificationSeverity
+  title         String               @db.VarChar(120)
+  body          String               @db.VarChar(500)
+  readAt        DateTime?            @db.Timestamptz(3)
+  createdAt     DateTime             @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+}

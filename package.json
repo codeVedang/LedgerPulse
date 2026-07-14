@@ -1,0 +1,30 @@
+{
+  "name": "ledgerpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Explainable financial behaviour and anomaly-aware mini ledger",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "npm run build -w @ledgerpulse/domain && npm run build -w @ledgerpulse/contracts && npm run build -w @ledgerpulse/api && npm run build -w @ledgerpulse/web",
+    "dev": "concurrently -n API,WEB -c cyan,magenta \"npm run dev -w @ledgerpulse/api\" \"npm run dev -w @ledgerpulse/web\"",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "db:generate": "npm run prisma:generate -w @ledgerpulse/api",
+    "db:migrate": "npm run prisma:migrate -w @ledgerpulse/api",
+    "db:seed": "npm run build -w @ledgerpulse/domain && npm run prisma:seed -w @ledgerpulse/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@types/node": "^22.15.0",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.38.0"
+  }
+}
