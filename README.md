@@ -4,6 +4,10 @@ LedgerPulse is an explainable financial-behaviour and anomaly-aware mini-ledger.
 
 This is a production-minded hiring assignment, not a claim of production readiness. It is deliberately honest about small samples, cache failure, single-user scope, and notification-delivery limitations.
 
+**Live deployment:** [Open LedgerPulse](https://web-production-ff552.up.railway.app) · [API health](https://api-production-271c.up.railway.app/api/health)
+
+The Railway deployment runs the Next.js web app, NestJS API, PostgreSQL, and Redis as separate services and includes deterministic demo data so the Behaviour Fingerprint can be reviewed immediately.
+
 ## 1. Problem interpretation
 
 A useful ledger should preserve exact financial records first. Behaviour analysis is secondary and must never compromise arithmetic, persistence, or trust. LedgerPulse therefore separates:
